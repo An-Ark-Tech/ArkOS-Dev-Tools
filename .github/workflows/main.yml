@@ -26,9 +26,9 @@ jobs:
       run: |
         make && make package
     - name: Deploy Packages
-      uses: docker://aladdin89/action-packagecloud:0.0.4
+      uses: docker://aladdin89/action-packagecloud:0.0.5
       with:
         user: ${{ secrets.PACKAGECLOUD_USERNAME }}
-        repository: anarktech/arkos/ubuntu/focal
+        repository: arkos/ubuntu/focal
       env:
         PACKAGECLOUD_TOKEN: ${{ secrets.PACKAGECLOUD_TOKEN }}
