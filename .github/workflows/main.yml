@@ -35,6 +35,5 @@ jobs:
       with:
         user: ${{ secrets.PACKAGECLOUD_USERNAME }}
         repository: anarktech/arkos/ubuntu/focal
-        directory: build-focal
       env:
         PACKAGECLOUD_TOKEN: ${{ secrets.PACKAGECLOUD_TOKEN }}
