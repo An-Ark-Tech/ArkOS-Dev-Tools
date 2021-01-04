@@ -26,7 +26,7 @@ jobs:
       run: |
         make && make package
         
-  docker-login:
+  deploy:
     needs: build-focal
     runs-on: ubuntu-latest
     steps:
@@ -35,11 +35,7 @@ jobs:
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
-          
-  deploy:
-    needs: docker-login
-    runs-on: ubuntu-latest
-    steps:
+
       - name: Deploy Packages
         uses: docker://aladdin89/action-packagecloud:0.0.1
         with:
