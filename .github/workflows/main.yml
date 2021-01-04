@@ -31,10 +31,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: Deploy Packages
-      uses: docker/login-action@v1 
-      with:
-        username: ${{ secrets.DOCKERHUB_USERNAME }}
-        password: ${{ secrets.DOCKERHUB_TOKEN }}      
       uses: docker://aladdin89/action-packagecloud:0.0.1
       with:
         user: ${{ secrets.PACKAGECLOUD_USERNAME }}
