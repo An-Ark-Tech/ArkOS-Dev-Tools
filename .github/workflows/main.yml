@@ -25,11 +25,6 @@ jobs:
     - name: Build repo
       run: |
         make && make package
-    - name: Login to Docker Hub
-      uses: docker/login-action@v1
-      with:
-        username: ${{ secrets.DOCKERHUB_USERNAME }}
-        password: ${{ secrets.DOCKERHUB_TOKEN }}
     - name: Deploy Packages
       uses: docker://aladdin89/action-packagecloud:0.0.7
       with:
