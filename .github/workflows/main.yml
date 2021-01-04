@@ -30,17 +30,15 @@ jobs:
     needs: build-focal
     runs-on: ubuntu-latest
     steps:
-      - name: Login to Docker Hub
-        uses: docker/login-action@v1 
-        with:
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_TOKEN }}
-
-      - name: Deploy Packages
-        uses: docker://aladdin89/action-packagecloud:0.0.1
-        with:
-          user: ${{ secrets.PACKAGECLOUD_USERNAME }}
-          repository: anarktech/arkos/ubuntu/focal
-          directory: build-focal
-        env:
-          PACKAGECLOUD_TOKEN: ${{ secrets.PACKAGECLOUD_TOKEN }}
+    - name: Deploy Packages
+      uses: docker/login-action@v1 
+      with:
+        username: ${{ secrets.DOCKERHUB_USERNAME }}
+        password: ${{ secrets.DOCKERHUB_TOKEN }}      
+      uses: docker://aladdin89/action-packagecloud:0.0.1
+      with:
+        user: ${{ secrets.PACKAGECLOUD_USERNAME }}
+        repository: anarktech/arkos/ubuntu/focal
+        directory: build-focal
+      env:
+        PACKAGECLOUD_TOKEN: ${{ secrets.PACKAGECLOUD_TOKEN }}
