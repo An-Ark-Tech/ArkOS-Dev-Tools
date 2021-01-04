@@ -1,0 +1,33 @@
+name: CI workflow
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+jobs:
+
+  build-focal:
+
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest]
+      fail-fast: false
+
+    container:
+      image: aladdin89/orocos-toolchain:2.8-ubuntu-focal
+      credentials:
+        username: ${{ secrets.DOCKERHUB_USERNAME }}
+        password: ${{ secrets.DOCKERHUB_TOKEN }}
+      options: --user root
+
+    steps:
+
+    - name: Checkout repo
+      uses: actions/checkout@v2
+      
+    - name: Build repo
+      run: |
+        make && make package
