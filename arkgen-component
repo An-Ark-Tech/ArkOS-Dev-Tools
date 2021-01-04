@@ -1,0 +1,8 @@
+#!/bin/bash -e
+
+if [ $# -ne 1 ]; then
+    # TODO: print usage
+    echo "Component Package Name is missing or contains space!"
+    exit 1
+fi
+arkcreate-pkg $1 component

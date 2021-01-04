@@ -1,0 +1,9 @@
+# Path to current file
+get_filename_component(SELF_DIR "${CMAKE_CURRENT_LIST_FILE}" PATH)
+set(ARKOS_USE_FILE ${SELF_DIR}/UseArkOS.cmake)
+set(ARKOS_VERSION_FILE ${SELF_DIR}/GitVersionGenerator.cmake)
+set(ARKOS_CPACK_FILE ${SELF_DIR}/pkgs-cpack.cmake)
+set(ARKOS_CPACK_OPT_FILE ${SELF_DIR}/cpack_options.cmake.in)
+
+# add the version in this file to be used in the other components that find it 
+set(ARKOS_CORE_VERSION @COMPONENT_VERSION@)

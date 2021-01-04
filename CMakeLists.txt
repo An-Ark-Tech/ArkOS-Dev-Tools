@@ -1,0 +1,27 @@
+cmake_minimum_required(VERSION 2.6.3)
+project(arkos-dev-tools)
+
+set (pkg_cmake_dir ${PROJECT_SOURCE_DIR}/cmake CACHE PATH "Location of CMake scripts")
+
+include(${pkg_cmake_dir}/GitVersionGenerator.cmake)
+generate_version( VERSION --tags --dirty=-dirty )
+set(COMPONENT_VERSION "${VERSION}")
+
+include (${pkg_cmake_dir}/pkgs-cpack.cmake)
+set(CPACK_PACKAGE_MAINTAINER "Aladdin")
+set(CPACK_PACKAGE_CONTACT "Aladdin")
+set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "ArkOS Dev Tools SUMMARY")
+set(CPACK_DEBIAN_PACKAGE_DEPENDS "libxml-xpath-perl")
+if (CPACK_GENERATOR)
+  message(STATUS "Found CPack generators: ${CPACK_GENERATOR}")
+  configure_file("${pkg_cmake_dir}/cpack_options.cmake.in" ${PKG_CPACK_CFG_FILE} @ONLY)
+  set(CPACK_PROJECT_CONFIG_FILE ${PKG_CPACK_CFG_FILE})
+  include (CPack)
+endif()
+
+install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/arkdep              DESTINATION bin PERMISSIONS OWNER_EXECUTE OWNER_WRITE OWNER_READ GROUP_EXECUTE GROUP_READ WORLD_READ WORLD_EXECUTE)
+install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/arkcreate-pkg       DESTINATION bin PERMISSIONS OWNER_EXECUTE OWNER_WRITE OWNER_READ GROUP_EXECUTE GROUP_READ WORLD_READ WORLD_EXECUTE)
+install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/arkgen-component    DESTINATION bin PERMISSIONS OWNER_EXECUTE OWNER_WRITE OWNER_READ GROUP_EXECUTE GROUP_READ WORLD_READ WORLD_EXECUTE)
+install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/arkgen-message      DESTINATION bin PERMISSIONS OWNER_EXECUTE OWNER_WRITE OWNER_READ GROUP_EXECUTE GROUP_READ WORLD_READ WORLD_EXECUTE)
+
+install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/arkos-templates DESTINATION bin)

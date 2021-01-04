@@ -1,0 +1,80 @@
+#!/bin/bash -e
+
+function usage()
+{
+  cat << EOF >&2
+Usage: ${0##*/} [options]
+
+This is a command-line tool for installing system dependencies.
+
+    -h,--help               Show this help
+    -y, --yes               Forces Yes to install packages (recommended only for CI)
+    --no-update             Will not run apt update. Useful when calling multiple times in a row
+
+EOF
+}
+
+while [ "$1" != "" ]; do
+    PARAM=`echo $1 | awk -F= '{print $1}'`
+    VALUE=`echo $1 | awk -F= '{print $2}'`
+    case $PARAM in
+        -h | --help)
+            usage
+            exit
+            ;;
+        -y | --yes)
+            YES="-y"
+            ;;
+        --no-update)
+            APT_NO_UPDATE=1
+            ;;
+        *)
+            echo "ERROR: unknown parameter \"$PARAM\""
+            usage
+            exit 1
+            ;;
+    esac
+    shift
+done
+
+# store result in array
+SAVEIFS=$IFS   # Save current IFS
+IFS=$'\n'      # Change IFS to new line
+packages=($(xpath -q -e "package/depend" $PWD/arkospkg.xml))
+expackages=($(xpath -q -e "package/exdepend/@package" $PWD/arkospkg.xml))
+IFS=$SAVEIFS   # Restore IFS
+
+depspkgs=""
+for pkg in "${packages[@]}"; do
+    # check if apt exists, if not use package
+    # regex result is stored in BASH_REMATCH
+    if [[ ! $pkg =~ apt\w*=\w*\"(.+)\" ]]; then
+        [[ $pkg =~ package\w*=\w*\"(.+)\" ]]
+    fi
+    depspkgs="$depspkgs ${BASH_REMATCH[1]}"
+done
+for pkg in "${expackages[@]}"; do
+    pkgName=$(sed 's/package=//g' <<<${pkg//\"/})
+    depspkgs="$depspkgs ${pkgName/$'\n'/}"
+done
+
+depspkgs=$(echo $depspkgs | tr '[:upper:]' '[:lower:]')
+echo "installing $depspkgs"
+
+command="apt"
+if [[ $EUID -ne 0 ]]; then
+    command="sudo apt"
+fi
+max_retry=7
+counter=0
+until [ ! -z "$APT_NO_UPDATE" ] || $command update
+do
+    sleep 5
+    if [[ counter -eq $max_retry ]]; then
+        echo "Failed to fetch from the apt repository!"
+        exit 1
+    fi
+    echo "Could not fetch from the apt repository Trying again. Try #$counter"
+    ((counter=counter+1))
+done
+$command install $YES $depspkgs

@@ -1,0 +1,8 @@
+*.cproject
+*.project
+*.settings
+*.tb_history
+*.log
+*build*
+.metadata
+*~

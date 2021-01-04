@@ -1,0 +1,193 @@
+#!/bin/bash -e
+
+
+function help
+{
+    echo
+    echo "Creates a new ArkOS package."
+#    echo " Usage: $(basename $0) [-f] package_name [component] [plugin] [service] [typekit] [message] [support] [empty] [cmake]"
+    echo " Usage: $(basename $0) [-f] package_name [component] [message]"
+    echo
+# TODO: provide proper support for multiple package types
+#   echo " If no package type after the package name is specified, an all-in-one"
+#   echo " template is created that can serve as everything. You may provide multiple arguments."
+    echo " Users must provide only one package type as argument."
+    echo " Multiple package types are currently not supported."
+    echo
+    echo "component    Creates component .hpp/cpp template and cmake logic."
+#    echo "plugin       Creates plugin .cpp template and cmake logic."
+#    echo "service      Creates service .cpp template and cmake logic."
+#    echo "typekit      Creates typekit cmake logic for calling typegen."
+    echo "message      Creates an Ark message typekit template."
+#    echo "support      Creates support library .cpp template and cmake logic."
+#    echo "empty        Creates an empty package with only a manifest."
+#    echo "cmake        Creates a package with only a manifest and CMakelists.txt."
+    echo
+    echo "Example:"
+    echo " $(basename $0) table_filter component"
+    echo "   Creates a package table_filter containing a component."
+    echo
+    echo "Other command line arguments:"
+    echo
+    echo " -f          Overwrite existing files."
+    echo
+}
+
+if [ x$1 = x ]; then
+    help
+    exit 1
+fi
+
+cwd="$(pwd)"
+abspath=$(dirname "$(cd "${0%/*}" 2>/dev/null; echo "$PWD"/"${0##*/}")")
+
+# Parse arguments
+force=
+for arg in $*; do
+    case "$arg" in
+	-f)
+	    force=-p
+	    ;;
+	-h|--help)
+	    help
+	    exit 1
+	    ;;
+  -*)
+      echo "Unknown command line option '$arg'"
+      echo
+      help
+      exit 1
+      ;;
+	*)
+	    if [ x$pkgname = x ]; then
+		pkgname=$arg
+	    else
+		ptypes="$ptypes $arg"
+	    fi
+	    ;;
+    esac
+done
+
+# TODO: provide proper support for multiple package types
+if [ "$(echo "${ptypes}" | wc -w)" -ne 1 ]; then
+    echo "Multiple package types are currently not supported!" >&2
+    exit 1
+fi
+
+# Locate the template directory. First look in orocos/ros roots
+# Default location:
+templatedir="$abspath/arkos-templates"
+
+if [ ! -d "$templatedir" ]; then
+	echo "Could not find templates at $templatedir !"
+  exit 1
+else
+  echo "Using templates at $templatedir..."
+fi
+
+# different logic depending on package type:
+# default files:
+files="$templatedir/Makefile $templatedir/CMakeLists.txt $templatedir/Jenkinsfile $templatedir/arkospkg.xml $templatedir/KWStyle.xml $templatedir/README.md $templatedir/.clang-format"
+
+for arg in $ptypes; do
+case "$arg" in
+#    "all")
+#	srcfiles="$(find $templatedir/src -maxdepth 1 -type f)"
+#	incfiles="$(find $templatedir/include -maxdepth 1 -type f)"
+#	cmake_files="component plugin service support"
+#	typekit=1
+#	;;
+#    "empty")
+#	files="$templatedir/manifest.xml"
+#	;;
+#   "cmake")
+#	;;
+#    "typekit")
+#	incfiles="$templatedir/include/*-types.hpp"
+#	typekit=1
+#	;;
+    "message")
+	pkgrootname="${pkgname}"
+	pkgname="ArkMsg${pkgrootname}"  # add prefix to pkgname for Ark message typekits
+	incfiles="${templatedir}/include/ArkMsg*.hpp"
+	message=1
+	;;
+    "component")
+	pkgrootname="${pkgname}"
+	pkgname="${pkgrootname}Component"  # add postfix to pkgname for Ark Components
+	srcfiles="$srcfiles $templatedir/src/CMakeLists.txt $templatedir/src/*-component*"
+	cmake_files="$cmake_files $arg"
+	;;
+    *)
+	srcfiles="$srcfiles $templatedir/src/CMakeLists.txt $templatedir/src/*$arg*"
+	cmake_files="$cmake_files $arg"
+	;;
+esac
+done
+
+# Arguments post-processing:
+allcappkgname=$(echo "${pkgname}" | tr "[:lower:]" "[:upper:]")
+cappkgname=$(echo "${allcappkgname}" | cut -c1)$(echo "${pkgname}" | cut -c2-)
+	
+if [ x"${ptypes}" = x ]; then
+    ptypes=all
+fi
+ 
+mkdir ${force} ${pkgname} || { echo "Package already exists. Use -f to force creation (will not erase your package but will overwrite generated files)" ; exit 1; }
+
+# get current date
+dateToday=`date --iso-8601`
+dateY=`date +"%Y"`
+
+copyright="Add your license here."
+
+# create src dir if required
+if [ "$srcfiles" ]; then
+  mkdir $force $pkgname/src
+fi
+if [ "$incfiles" ]; then
+  mkdir -p $pkgname/include/$pkgname
+fi
+# create test dir if required
+if [ "${testfiles}" ]; then
+  mkdir -p ${pkgname}/test
+fi
+
+# process template files (drop .tpl suffix if present):
+for i in $files; do
+    tgtname=$(echo $(basename "$i") | sed -e "s/pkgname/$pkgname/g;s/Pkgname/$cappkgname/g;s/\.tpl//g;")
+    cat "$i" | sed -e "s/@PKGNAME@/$allcappkgname/g;s/@pkgname@/$pkgname/g;s/@Pkgname@/$cappkgname/g;s/@today@/$dateToday/g;" > $pkgname/$tgtname
+done
+
+if [ "$srcfiles" ]; then
+  cat $templatedir/cmake/srcdir.cmake | sed -e "s/@PKGNAME@/$allcappkgname/g;s/@pkgname@/$pkgname/g;s/@Pkgname@/$cappkgname/g;"  >> $pkgname/CMakeLists.txt
+fi
+
+# Typegen is at toplevel
+if [ "$message" ]; then
+  cat ${templatedir}/cmake/message.cmake | sed -e "s/@PKGNAME@/${allcappkgname}/g;s/@pkgname@/${pkgname}/g;s/@Pkgname@/${cappkgname}/g;"  >> ${pkgname}/CMakeLists.txt
+fi
+
+# process src files:
+for i in $srcfiles; do
+    tgtname=$(echo $(basename "$i") | sed -e "s/pkgname/$pkgname/g;s/Pkgname/$cappkgname/g;")
+    tgtname=$(echo "$tgtname" | sed -e "s/-component//")
+    cat "$i" | sed -e "s/@PKGNAME@/$allcappkgname/g;s/@pkgname@/$pkgname/g;s/@Pkgname@/$cappkgname/g;s/@today@/$dateToday/g;s/@copyright@/$copyright/g;" > $pkgname/src/$tgtname
+done
+for i in $incfiles; do
+    tgtname=$(echo "$(basename "${i}")" | sed -e "s/pkgrootname/${pkgrootname}/g;s/pkgname/${pkgname}/g;s/Pkgname/${cappkgname}/g;")
+    cat "$i" | sed -e "s/@PKGNAME@/$allcappkgname/g;s/@pkgname@/$pkgname/g;s/@Pkgname@/$cappkgname/g;s/@today@/$dateToday/g;s/@copyright@/$copyright/g;" > $pkgname/include/$pkgname/$tgtname
+done
+
+# add CMake snippets:
+for i in $cmake_files; do
+  cat $templatedir/cmake/$i.cmake | sed -e "s/@PKGNAME@/$allcappkgname/g;s/@pkgname@/$pkgname/g;s/@Pkgname@/$cappkgname/g;" >> $pkgname/src/CMakeLists.txt
+done
+
+if [ "$cmake_files" ]; then
+    cat $templatedir/cmake/tail.cmake | sed -e "s/@PKGNAME@/$allcappkgname/g;s/@pkgname@/$pkgname/g;s/@Pkgname@/$cappkgname/g;"  >> $pkgname/CMakeLists.txt
+fi
+
+echo "Package $pkgname created in directory $cwd/$pkgname"
+exit 0
+
