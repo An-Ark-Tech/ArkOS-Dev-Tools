@@ -25,11 +25,6 @@ jobs:
     - name: Build repo
       run: |
         make && make package
-        
-  deploy:
-    needs: build-focal
-    runs-on: ubuntu-latest
-    steps:
     - name: Deploy Packages
       uses: docker://aladdin89/action-packagecloud:0.0.2
       with:
