@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<!--Project>This is my project</Project-->
+<!--ProjectLogo>Project Logo</ProjectLogo-->
+<!--KWStyleLogo>KWSTYleLogo</KWStyleLogo-->
+<!--ErrorThreshold>1</ErrorThreshold-->
+<Description>
+    <LineLength>120</LineLength>
+
+    <!--
+        - IVR: Internal variables should match a particular regular expression
+        - IVP: Internal variables should be in the protected or private section
+    -->
+    <InternalVariables>
+        <regex>^m_[a-z]+([A-Z][A-Za-z]+)+$|EIGEN_MAKE_ALIGNED_OPERATOR_NEW</regex>
+        <alignment>0</alignment>
+        <private>1</private> 
+    </InternalVariables>
+    
+    <!--
+    - DCL: Check if the order of the declaration matches a pattern composed 
+           of Public,Protected and Private
+    -->
+    <DeclarationOrder>
+        <public>0</public>
+        <protected>1</protected>
+        <private>2</private>
+    </DeclarationOrder>
+    
+    <!--
+        - DEF: #ifndef/#define should match a pattern
+    -->
+    <IfNDefDefine>Ark_ArkOS_[NameOfClass]_[Extension]_</IfNDefDefine>
+    
+    <!--
+        - NMS: The first namespace in the file should match a specific word	
+    -->
+    <Namespace>Ark</Namespace>
+    
+    <!--
+        - MBF: Check Regular Expression for Member Functions
+    -->
+    <MemberFunctions>
+        <regex>^[a-z]+([A-Z][A-Za-z]+)+$|[NameOfClass]</regex>
+    </MemberFunctions>
+
+    <!--
+        - FRG: Check if the function respect regular expressions	
+    -->
+    <Functions>
+        <regex>^[a-z]+([A-Z][A-Za-z]+)+$|\]|[NameOfClass]|operator|=</regex>
+    </Functions>
+
+    <!--
+        - NMC: The name of the class should match the name of the file plus/minus some characters
+    -->
+    <NameOfClass>
+      <name>[NameOfClass]</name>
+      <prefix></prefix>
+    </NameOfClass>
+
+</Description>

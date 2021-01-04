@@ -1,0 +1,13 @@
+<package>
+  <description brief="ArkOS @pkgname@ package">
+    This package contains @pkgname@ package
+  </description>
+  <license>
+  </license>
+  <author>
+    Engineer X
+  </author>
+  <depend package="orocos-rtt" />
+  <depend package="ArkOS-core" />
+  <depend package="ArkMsgBase" />
+</package>
